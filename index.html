@@ -1,0 +1,1376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bagel Log</title>
+<meta name="description" content="Offline log of homemade bagel batches: variables, photos and scores.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bagel Log">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#f6f4f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f6f4f1; --card:#ffffff; --fg:#191510; --muted:#6f6459; --line:#e0d9d0;
+  --accent:#8a5a20; --accent-fg:#ffffff; --danger:#a32b1e;
+  --warn-bg:#fdf3e0; --warn-line:#e6cf9f; --shade:rgba(0,0,0,.45);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141210; --card:#1f1c18; --fg:#f2ede5; --muted:#a79c8e; --line:#35302a;
+    --accent:#d99c4c; --accent-fg:#1a1409; --danger:#e8776a;
+    --warn-bg:#2a2118; --warn-line:#4b3c26; --shade:rgba(0,0,0,.7);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font:17px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;touch-action:manipulation;overscroll-behavior-y:none;
+}
+[hidden]{display:none !important}
+h1,h2,h3,p{margin:0}
+
+/* ---------- chrome ---------- */
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.bar{display:flex;align-items:center;gap:6px;min-height:54px;padding:6px 8px;max-width:680px;margin:0 auto}
+.bar h1{flex:1;text-align:center;font-size:18px;font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .slot{flex:0 0 auto;min-width:84px;display:flex}
+.bar .slot.right{justify-content:flex-end}
+main{max-width:680px;margin:0 auto;padding:14px 14px calc(40px + env(safe-area-inset-bottom))}
+
+/* ---------- controls ---------- */
+.btn{
+  font:inherit;font-size:17px;color:var(--fg);background:var(--card);
+  border:1px solid var(--line);border-radius:12px;min-height:48px;padding:11px 16px;
+  -webkit-appearance:none;appearance:none;cursor:pointer;text-align:center;
+  -webkit-user-select:none;user-select:none;
+}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--danger)}
+.btn.wide{display:block;width:100%}
+.btn.link{background:none;border:none;color:var(--accent);min-height:44px;padding:8px 6px;font-weight:500}
+.btn.small{min-height:44px;font-size:16px;padding:8px 12px}
+.btn:active{opacity:.75}
+.btn:disabled{opacity:.5}
+input[type=text],input[type=date],textarea{
+  font:inherit;font-size:17px;color:var(--fg);background:var(--card);
+  border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;
+  min-height:48px;-webkit-appearance:none;appearance:none;
+}
+input[type=date]{display:block;min-width:0}
+textarea{min-height:112px;line-height:1.45;resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+/* ---------- list ---------- */
+.stack{display:flex;flex-direction:column;gap:10px}
+.card{
+  display:flex;gap:12px;align-items:center;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;
+  font:inherit;color:var(--fg);cursor:pointer;-webkit-user-select:none;user-select:none;
+}
+.card:active{opacity:.75}
+.thumb{
+  width:76px;height:76px;flex:0 0 auto;border-radius:10px;overflow:hidden;
+  background:var(--bg);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:24px;
+}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cardbody{flex:1;min-width:0;display:block}
+.cardtop{display:flex;align-items:baseline;gap:8px}
+.cardtop .num{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.cardtop .total{margin-left:auto;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--accent)}
+.cardtop .total.none{color:var(--muted);font-weight:500}
+.cardsub{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.cardnote{display:block;font-size:15px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:16px}
+
+.banner{display:flex;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:12px;padding:10px 10px 10px 14px;margin-bottom:12px}
+.banner .txt{flex:1;min-width:0;font-size:15px;line-height:1.3}
+.banner .btn{min-height:40px;padding:8px 12px;font-size:15px}
+
+/* ---------- form ---------- */
+.field{margin:0 0 16px}
+.field > label,.grouplabel{display:block;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.inline{display:flex;align-items:center;gap:8px}
+.inline .unit{flex:0 0 auto;min-width:52px;color:var(--muted);font-size:15px}
+.section{border-top:1px solid var(--line);margin:22px 0 16px;padding-top:18px}
+.scorehead{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
+.scorehead .grouplabel{margin:0;flex:1}
+.scorehead .tot{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+.scoreblock{margin-bottom:14px}
+.scoreblock .lbl{display:flex;justify-content:space-between;font-size:15px;margin-bottom:6px}
+.scoreblock .lbl .v{color:var(--muted);font-variant-numeric:tabular-nums}
+.segs{display:flex;gap:6px}
+.seg{
+  flex:1;min-height:50px;font:inherit;font-size:17px;font-variant-numeric:tabular-nums;
+  background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:10px;
+  -webkit-appearance:none;appearance:none;cursor:pointer;-webkit-user-select:none;user-select:none;
+}
+.seg[aria-pressed=true]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700}
+.seg:active{opacity:.75}
+
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.photo{position:relative;padding-top:100%;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
+.photo .x{
+  position:absolute;top:5px;right:5px;width:32px;height:32px;padding:0;
+  border:none;border-radius:16px;background:rgba(0,0,0,.62);color:#fff;
+  font:600 17px/1 -apple-system,system-ui,sans-serif;cursor:pointer;
+}
+.photobtns{display:flex;gap:8px}
+.photobtns .btn{flex:1}
+.note{color:var(--muted);font-size:14px;line-height:1.35;margin-top:6px}
+
+/* ---------- settings ---------- */
+.varrow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.varrow .grid{display:grid;grid-template-columns:1fr 74px 88px;gap:8px}
+.varrow .grid input{font-size:16px;min-height:46px;padding:9px 10px}
+.varrow .tools{display:flex;gap:8px;margin-top:8px}
+.varrow .tools .btn{min-height:44px;padding:8px 10px;font-size:16px;flex:0 0 auto;min-width:52px}
+.varrow .tools .sp{flex:1}
+.caps{display:grid;grid-template-columns:1fr 74px 88px;gap:8px;font-size:12px;color:var(--muted);padding:0 4px 4px;letter-spacing:.03em;text-transform:uppercase;font-weight:700}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:15px;color:var(--muted);padding:4px 2px}
+
+/* ---------- compare ---------- */
+.cmp-wrap{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden;margin-bottom:4px}
+.cmp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.cmp{border-collapse:separate;border-spacing:0;width:auto;min-width:100%;font-variant-numeric:tabular-nums;font-size:16px}
+table.cmp th,table.cmp td{padding:9px 11px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+table.cmp tr:last-child th,table.cmp tr:last-child td{border-bottom:none}
+table.cmp thead th{font-size:16px;font-weight:700;vertical-align:bottom}
+table.cmp td{min-width:84px}
+table.cmp .rowhead{
+  position:sticky;left:0;z-index:2;background:var(--card);
+  text-align:left;font-size:15px;font-weight:600;white-space:normal;
+  min-width:134px;max-width:170px;border-right:1px solid var(--line);
+  box-shadow:2px 0 4px rgba(0,0,0,.05);
+}
+table.cmp thead .rowhead{z-index:3}
+table.cmp .rowhead .unit{display:block;font-size:13px;font-weight:400;color:var(--muted)}
+table.cmp thead .d{display:block;font-size:13px;font-weight:500;color:var(--muted)}
+table.cmp thead .badge{display:block;margin-top:3px;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--accent)}
+table.cmp .best{background:var(--warn-bg)}
+table.cmp tr.sect th,table.cmp tr.sect td{
+  background:var(--bg);padding:6px 12px;font-size:12px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);
+}
+table.cmp tr.sect .rowhead{background:var(--bg)}
+table.cmp tr.total th,table.cmp tr.total td{font-size:17px;font-weight:700}
+table.cmp .dash{color:var(--muted)}
+
+.chgcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.chghead{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.chghead .pair{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.chghead .dates{margin-left:auto;color:var(--muted);font-size:14px;white-space:nowrap}
+.diffs{list-style:none;margin:0 0 10px;padding:0}
+.diffs li{display:flex;gap:12px;align-items:baseline;font-size:15px;padding:3px 0}
+.diffs .dn{flex:1;min-width:0;color:var(--muted)}
+.diffs .dv{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nochg{color:var(--muted);font-size:15px;margin:0 0 10px}
+.deltas{display:flex;flex-wrap:wrap;gap:8px}
+.delta{
+  font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;
+  border:1px solid var(--line);border-radius:999px;padding:6px 11px;color:var(--muted);
+}
+.delta.up{color:var(--accent);border-color:var(--accent)}
+.delta.down{color:var(--danger);border-color:var(--danger)}
+
+/* ---------- bottom nav ---------- */
+#tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;
+  background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);
+}
+#tabbar .tab{
+  flex:1;min-height:54px;padding:8px 4px;border:none;background:none;
+  font:inherit;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer;
+  -webkit-user-select:none;user-select:none;
+}
+#tabbar .tab.on{color:var(--accent)}
+#tabbar .tab:active{opacity:.6}
+body.tabs main{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
+
+/* ---------- overlays ---------- */
+#modal{position:fixed;inset:0;z-index:40;background:var(--shade);display:flex;align-items:flex-end;justify-content:center}
+#modal .sheet{
+  background:var(--card);border-radius:16px;padding:18px;width:100%;max-width:420px;
+  margin:0 10px calc(10px + env(safe-area-inset-bottom));border:1px solid var(--line);
+}
+#modal h2{font-size:18px;margin-bottom:6px}
+#modal p{color:var(--muted);font-size:15px;line-height:1.4;margin-bottom:14px;white-space:pre-line}
+#modal .sheetbtns{display:flex;flex-direction:column;gap:8px}
+#viewer{position:fixed;inset:0;z-index:45;background:#000;display:flex;align-items:center;justify-content:center}
+#viewer img{max-width:100%;max-height:100%;object-fit:contain}
+#viewer .x{
+  position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;
+  width:44px;height:44px;border-radius:22px;border:none;background:rgba(255,255,255,.22);color:#fff;font-size:20px;cursor:pointer;
+}
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%);width:88%;max-width:420px;
+  bottom:calc(22px + env(safe-area-inset-bottom));z-index:50;
+  background:var(--fg);color:var(--bg);padding:11px 16px;border-radius:22px;
+  font-size:15px;text-align:center;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="slot left" id="bar-left"></div>
+    <h1 id="bar-title">Bagel Log</h1>
+    <div class="slot right" id="bar-right"></div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ 1. BATCH LIST ============ -->
+  <section id="screen-list" hidden>
+    <div id="backup-banner" class="banner" hidden></div>
+    <button class="btn primary wide" data-act="new-batch" style="margin-bottom:14px">New batch</button>
+    <div id="cards" class="stack"></div>
+  </section>
+
+  <!-- ============ 2. BATCH EDIT ============ -->
+  <section id="screen-edit" hidden>
+    <div class="field">
+      <label for="f-date">Date</label>
+      <input type="date" id="f-date">
+    </div>
+
+    <div id="var-fields"></div>
+
+    <div class="section">
+      <span class="grouplabel">Photos</span>
+      <div class="photos" id="photo-grid"></div>
+      <div class="photobtns">
+        <button class="btn" type="button" data-act="camera">Take photo</button>
+        <button class="btn" type="button" data-act="library">Add from library</button>
+      </div>
+      <input class="hidden-input" type="file" id="f-camera" accept="image/*" capture="environment">
+      <input class="hidden-input" type="file" id="f-library" accept="image/*" multiple>
+      <p class="note">Photos are resized to 1280px on the long edge and kept on this device only.</p>
+    </div>
+
+    <div class="section">
+      <div class="scorehead">
+        <span class="grouplabel">Scores</span>
+        <span class="tot" id="score-total">–/20</span>
+      </div>
+      <div id="score-fields"></div>
+    </div>
+
+    <div class="section">
+      <div class="field">
+        <label for="f-notes">Notes</label>
+        <textarea id="f-notes" placeholder="What you changed, what to try next…"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-ainotes">AI notes</label>
+        <textarea id="f-ainotes" placeholder="Optional — paste feedback or analysis here."></textarea>
+      </div>
+    </div>
+
+    <button class="btn primary wide" type="button" data-act="save" style="margin-bottom:10px">Save batch</button>
+    <button class="btn danger wide" type="button" data-act="delete" id="btn-delete">Delete batch</button>
+  </section>
+
+  <!-- ============ 3. COMPARE ============ -->
+  <section id="screen-compare" hidden>
+    <div id="compare-table"></div>
+    <div id="compare-changes"></div>
+  </section>
+
+  <!-- ============ 4. SETTINGS ============ -->
+  <section id="screen-settings" hidden>
+    <span class="grouplabel">Variables</span>
+    <p class="note" style="margin:0 0 12px">Every batch records these. Editing a name or unit updates it everywhere; the default is used for your very first batch.</p>
+    <div class="caps"><span>Name</span><span>Unit</span><span>Default</span></div>
+    <div id="var-list"></div>
+    <button class="btn wide" type="button" data-act="add-var">Add variable</button>
+
+    <div class="section">
+      <span class="grouplabel">Backup</span>
+      <p class="note" style="margin:0 0 12px">Export writes every batch, photo and variable into one JSON file. Nothing leaves this device unless you share the file yourself.</p>
+      <div class="kv"><span>Batches</span><span id="stat-batches">–</span></div>
+      <div class="kv" style="margin-bottom:12px"><span>Last export</span><span id="stat-export">never</span></div>
+      <button class="btn primary wide" type="button" data-act="export" style="margin-bottom:10px">Export all data</button>
+      <button class="btn wide" type="button" data-act="import">Import from file</button>
+      <input class="hidden-input" type="file" id="f-import" accept="application/json,.json">
+    </div>
+
+    <div class="section">
+      <div class="kv"><span>Bagel Log</span><span id="stat-version">v1</span></div>
+      <div class="kv"><span>Storage</span><span id="stat-storage">IndexedDB, this device</span></div>
+    </div>
+  </section>
+</main>
+
+<nav id="tabbar" hidden>
+  <button class="tab" type="button" data-act="tab" data-tab="list">Batches</button>
+  <button class="tab" type="button" data-act="tab" data-tab="compare">Compare</button>
+  <button class="tab" type="button" data-act="tab" data-tab="settings">Settings</button>
+</nav>
+
+<div id="modal" hidden></div>
+<div id="viewer" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+"use strict";
+/* =======================================================================
+   Bagel Log — single-file PWA. Vanilla JS, no build step, no backend.
+   Everything (including photo Blobs) lives in IndexedDB on this device.
+   ======================================================================= */
+
+/* ---------------------------- tiny helpers ---------------------------- */
+const $  = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const uid = () => (self.crypto && crypto.randomUUID)
+  ? crypto.randomUUID()
+  : 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+const todayISO = () => {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
+const fmtDate = iso => {
+  if (!iso) return 'No date';
+  const p = String(iso).split('-').map(Number);
+  if (p.length !== 3 || !p[0]) return String(iso);
+  const d = new Date(p[0], p[1] - 1, p[2]);
+  return isNaN(d) ? String(iso) : d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+};
+const fmtStamp = ms => !ms ? 'never'
+  : new Date(ms).toLocaleString(undefined, { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+
+const SCORE_KEYS = [
+  ['crust',  'Crust'],
+  ['rise',   'Rise'],
+  ['chew',   'Chew'],
+  ['flavor', 'Flavor']
+];
+
+/* ------------------------------ IndexedDB ----------------------------- */
+const DB_NAME = 'bagel-log', DB_VER = 1;
+let _db = null;
+
+function openDB() {
+  if (_db) return Promise.resolve(_db);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('batches')) {
+        const s = db.createObjectStore('batches', { keyPath: 'id' });
+        s.createIndex('number', 'number');
+        s.createIndex('date', 'date');
+      }
+      if (!db.objectStoreNames.contains('vars')) {
+        const s = db.createObjectStore('vars', { keyPath: 'id' });
+        s.createIndex('order', 'order');
+      }
+      if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta', { keyPath: 'key' });
+    };
+    req.onsuccess = () => { _db = req.result; _db.onversionchange = () => { _db.close(); _db = null; }; resolve(_db); };
+    req.onerror   = () => reject(req.error);
+  });
+}
+const wrap   = req => new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); });
+const txDone = tx  => new Promise((res, rej) => { tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error || new Error('aborted')); });
+
+async function txStore(name, mode) {
+  const db = await openDB();
+  return db.transaction(name, mode || 'readonly').objectStore(name);
+}
+async function dbAll(name)      { return wrap((await txStore(name)).getAll()); }
+async function dbGet(name, key) { return wrap((await txStore(name)).get(key)); }
+async function dbPut(name, val) {
+  const s = await txStore(name, 'readwrite');
+  s.put(val);
+  await txDone(s.transaction);
+  return val;
+}
+async function dbDel(name, key) {
+  const s = await txStore(name, 'readwrite');
+  s.delete(key);
+  await txDone(s.transaction);
+}
+const getMeta = async k => { const r = await dbGet('meta', k); return r ? r.value : null; };
+const setMeta = (k, v) => dbPut('meta', { key: k, value: v });
+
+/* Next batch number = highest existing + 1 (survives deletes and imports). */
+async function nextNumber() {
+  const s = await txStore('batches');
+  const cur = await wrap(s.index('number').openCursor(null, 'prev'));
+  const n = cur && typeof cur.value.number === 'number' ? cur.value.number : 0;
+  return n + 1;
+}
+
+/* --------------------------- domain helpers --------------------------- */
+const SEED_VARS = [
+  { name: 'Humidity',               unit: '%',   defaultValue: ''    },
+  { name: 'Flour',                  unit: 'g',   defaultValue: '1000'},
+  { name: 'Water',                  unit: 'g',   defaultValue: '580' },
+  { name: 'Diastatic malt powder',  unit: 'g',   defaultValue: '10'  },
+  { name: 'Salt',                   unit: 'g',   defaultValue: '20'  },
+  { name: 'Yeast',                  unit: 'g',   defaultValue: '6'   },
+  { name: 'Proof time',             unit: 'min', defaultValue: '60'  },
+  { name: 'Boil time',              unit: 'sec', defaultValue: '30'  },
+  { name: 'Oven temp',              unit: 'F',   defaultValue: '500' }
+];
+
+/* Seed once. If the user later deletes every variable, we honour that. */
+async function ensureSeed() {
+  if (await getMeta('seeded')) return;
+  const existing = await dbAll('vars');
+  if (!existing.length) {
+    const s = await txStore('vars', 'readwrite');
+    SEED_VARS.forEach((v, i) => s.put({ id: uid(), name: v.name, unit: v.unit, defaultValue: v.defaultValue, order: i }));
+    await txDone(s.transaction);
+  }
+  await setMeta('seeded', 1);
+}
+
+const byOrder = (a, b) => (a.order - b.order) || String(a.name).localeCompare(String(b.name));
+/* Newest first: date descending, then batch number descending. */
+const byNewest = (a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.number - a.number);
+
+const getVars    = async () => (await dbAll('vars')).sort(byOrder);
+const getBatches = async () => (await dbAll('batches')).sort(byNewest);
+
+const scoreTotal = scores => SCORE_KEYS.reduce((sum, k) => sum + (Number(scores && scores[k[0]]) || 0), 0);
+const hasScores  = scores => SCORE_KEYS.some(k => Number(scores && scores[k[0]]) > 0);
+
+/* -------------------------- image downscaling ------------------------- */
+const MAX_EDGE = 1280;
+
+function loadImageEl(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read that image.')); };
+    img.src = url;
+  });
+}
+function canvasToBlob(canvas, type, quality) {
+  return new Promise(resolve => {
+    if (canvas.toBlob) return canvas.toBlob(resolve, type, quality);
+    try { /* very old Safari */
+      const parts = canvas.toDataURL(type, quality).split(',');
+      resolve(new Blob([b64ToBytes(parts[1])], { type }));
+    } catch (e) { resolve(null); }
+  });
+}
+/* Resize to MAX_EDGE on the longest side and re-encode as JPEG.
+   Decode through an <img>: every current engine applies EXIF orientation there
+   (Safari 13.1+, Chrome 81+), which createImageBitmap does not promise on WebKit,
+   so portrait phone photos come out upright instead of on their side. */
+async function resizeImage(file) {
+  let src = null;
+  try { src = await loadImageEl(file); }
+  catch (e) {
+    if (!self.createImageBitmap) throw e;
+    src = await createImageBitmap(file);
+  }
+  const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
+  if (!w || !h) throw new Error('Could not read that image.');
+  const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+  const cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = cw; canvas.height = ch;
+  canvas.getContext('2d').drawImage(src, 0, 0, cw, ch);
+  if (src.close) src.close();
+  const blob = await canvasToBlob(canvas, 'image/jpeg', 0.82);
+  canvas.width = canvas.height = 0;              // release the backing store on iOS
+  return blob || file;                           // worst case, keep the original
+}
+
+/* ------------------------- object URL bookkeeping --------------------- */
+let liveUrls = [];
+function objUrl(blob) { const u = URL.createObjectURL(blob); liveUrls.push(u); return u; }
+function releaseUrls() { liveUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) {} }); liveUrls = []; }
+
+/* ------------------------------ overlays ------------------------------ */
+let toastTimer = null;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
+}
+
+/* modal('Title','Body',[{label,value,kind}]) -> Promise(value|null) */
+function modal(title, body, buttons) {
+  return new Promise(resolve => {
+    const root = $('#modal');
+    root.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">'
+      + '<h2>' + esc(title) + '</h2>'
+      + (body ? '<p>' + esc(body) + '</p>' : '')
+      + '<div class="sheetbtns"></div></div>';
+    const onBackdrop = e => { if (e.target === root) done(null); };
+    const done = val => {
+      root.removeEventListener('click', onBackdrop);
+      root.hidden = true; root.innerHTML = ''; resolve(val);
+    };
+    const holder = $('.sheetbtns', root);
+    buttons.forEach(b => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'btn' + (b.kind ? ' ' + b.kind : '');
+      el.textContent = b.label;
+      el.addEventListener('click', () => done(b.value));
+      holder.appendChild(el);
+    });
+    root.addEventListener('click', onBackdrop);
+    root.hidden = false;
+  });
+}
+const confirmSheet = (title, body, okLabel, kind) =>
+  modal(title, body, [
+    { label: okLabel, value: true, kind: kind || 'primary' },
+    { label: 'Cancel', value: false }
+  ]).then(v => v === true);
+
+function showPhoto(blob) {
+  const v = $('#viewer');
+  const url = URL.createObjectURL(blob);
+  v.innerHTML = '<img alt="Batch photo"><button class="x" type="button" aria-label="Close">&#10005;</button>';
+  $('img', v).src = url;
+  const close = () => { v.removeEventListener('click', close); v.hidden = true; v.innerHTML = ''; URL.revokeObjectURL(url); };
+  v.addEventListener('click', close);
+  v.hidden = false;
+}
+
+/* ------------------------------- router ------------------------------- */
+const SCREENS = ['list', 'edit', 'compare', 'settings'];
+let current = 'list';
+
+function setBar(title, left, right) {
+  $('#bar-title').textContent = title;
+  const build = (host, spec) => {
+    host.innerHTML = '';
+    if (!spec) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn link' + (spec.strong ? ' strong' : '');
+    if (spec.strong) b.style.fontWeight = '700';
+    b.textContent = spec.label;
+    b.dataset.act = spec.act;
+    host.appendChild(b);
+  };
+  build($('#bar-left'), left);
+  build($('#bar-right'), right);
+}
+
+function show(name) {
+  releaseUrls();
+  current = name;
+  SCREENS.forEach(s => { $('#screen-' + s).hidden = (s !== name); });
+  /* Editing is a full-screen task with its own Back/Save: no tabs under it. */
+  const tabs = name !== 'edit';
+  $('#tabbar').hidden = !tabs;
+  document.body.classList.toggle('tabs', tabs);
+  $$('#tabbar .tab').forEach(b => {
+    const on = b.dataset.tab === name;
+    b.classList.toggle('on', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  window.scrollTo(0, 0);
+}
+
+async function goTab(name) {
+  if (name === current) return;
+  await flushVarSaves();
+  if (name === 'list') return renderList();
+  if (name === 'compare') return renderCompare();
+  return renderSettings();
+}
+
+/* =================== SCREEN 1 — batch list =================== */
+async function renderList() {
+  show('list');
+  setBar('Bagel Log', null, null);
+
+  const batches = await getBatches();
+  const host = $('#cards');
+  host.innerHTML = '';
+
+  if (!batches.length) {
+    host.innerHTML = '<p class="empty">No batches yet.<br>Tap <strong>New batch</strong> after your next bake.</p>';
+  } else {
+    batches.forEach(b => {
+      const total = scoreTotal(b.scores);
+      const scored = hasScores(b.scores);
+      const photos = Array.isArray(b.photos) ? b.photos.length : 0;
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'card';
+      el.dataset.act = 'open-batch';
+      el.dataset.id  = b.id;
+      el.innerHTML =
+        '<span class="thumb"></span>' +
+        '<span class="cardbody">' +
+          '<span class="cardtop">' +
+            '<span class="num">#' + esc(b.number) + '</span>' +
+            '<span class="total' + (scored ? '' : ' none') + '">' + (scored ? total + '/20' : 'unscored') + '</span>' +
+          '</span>' +
+          '<span class="cardsub">' + esc(fmtDate(b.date)) + (photos ? ' &middot; ' + photos + ' photo' + (photos > 1 ? 's' : '') : '') + '</span>' +
+          (b.notes ? '<span class="cardnote">' + esc(String(b.notes).split('\n')[0]) + '</span>' : '') +
+        '</span>';
+      const thumb = $('.thumb', el);
+      if (photos && b.photos[0] instanceof Blob) {
+        const img = document.createElement('img');
+        img.alt = '';
+        img.loading = 'lazy';
+        img.src = objUrl(b.photos[0]);
+        thumb.appendChild(img);
+      } else {
+        thumb.textContent = '◎';                 // ring glyph placeholder
+      }
+      host.appendChild(el);
+    });
+  }
+  await renderBackupBanner(batches);
+}
+
+/* "Back up" reminder: newest change is more recent than the last export. */
+let bannerDismissed = false;
+async function renderBackupBanner(batches) {
+  const el = $('#backup-banner');
+  el.hidden = true;
+  el.innerHTML = '';
+  if (bannerDismissed || !batches.length) return;
+  const lastExport = Number(await getMeta('lastExportAt')) || 0;
+  const newest = batches.reduce((max, b) => Math.max(max, Number(b.updatedAt) || 0), 0);
+  if (lastExport >= newest) return;
+  el.innerHTML =
+    '<span class="txt">' +
+      (lastExport ? 'Batches changed since your last backup.' : 'Your batches are only on this phone.') +
+    '</span>' +
+    '<button class="btn primary" type="button" data-act="export">Back up</button>' +
+    '<button class="btn" type="button" data-act="dismiss-banner" aria-label="Dismiss" style="min-width:44px;padding:8px 10px">&#10005;</button>';
+  el.hidden = false;
+}
+
+/* =================== SCREEN 2 — batch edit =================== */
+let draft = null;          // the batch being edited (photos are live Blobs)
+let draftVars = [];        // VariableDefs at the time the screen opened
+let dirty = false;
+const markDirty = () => { dirty = true; };
+
+async function openBatch(id) {
+  draftVars = await getVars();
+  let isNew = false;
+
+  if (id) {
+    const b = await dbGet('batches', id);
+    if (!b) { toast('That batch is gone.'); return renderList(); }
+    draft = {
+      id: b.id, number: b.number, date: b.date || todayISO(),
+      notes: b.notes || '',
+      photos: (b.photos || []).filter(p => p instanceof Blob),
+      variables: Object.assign({}, b.variables),
+      scores: Object.assign({ crust:null, rise:null, chew:null, flavor:null }, b.scores),
+      aiNotes: b.aiNotes == null ? null : b.aiNotes,
+      createdAt: b.createdAt || Date.now()
+    };
+  } else {
+    isNew = true;
+    /* Clone the most recent batch's values so you only edit what changed. */
+    const previous = (await getBatches())[0];
+    const variables = {};
+    draftVars.forEach(v => {
+      const prior = previous && previous.variables ? previous.variables[v.id] : undefined;
+      variables[v.id] = (prior === undefined || prior === null) ? (v.defaultValue || '') : prior;
+    });
+    draft = {
+      id: null, number: null, date: todayISO(), notes: '', photos: [],
+      variables: variables,
+      scores: { crust:null, rise:null, chew:null, flavor:null },
+      aiNotes: null, createdAt: Date.now()
+    };
+  }
+
+  dirty = false;
+  show('edit');
+  setBar(isNew ? 'New batch' : 'Batch #' + draft.number,
+         { label: 'Back', act: 'back-to-list' },
+         { label: 'Save', act: 'save', strong: true });
+
+  $('#f-date').value    = draft.date;
+  $('#f-notes').value   = draft.notes;
+  $('#f-ainotes').value = draft.aiNotes == null ? '' : draft.aiNotes;
+  $('#btn-delete').hidden = isNew;
+
+  renderVarFields();
+  renderScoreFields();
+  renderPhotoGrid();
+}
+
+function renderVarFields() {
+  const host = $('#var-fields');
+  host.innerHTML = '';
+  if (!draftVars.length) {
+    host.innerHTML = '<p class="note" style="margin-bottom:16px">No variables defined. Add some in Settings.</p>';
+    return;
+  }
+  draftVars.forEach(v => {
+    const wrapEl = document.createElement('div');
+    wrapEl.className = 'field';
+    const inputId = 'var-' + v.id;
+    wrapEl.innerHTML =
+      '<label for="' + esc(inputId) + '">' + esc(v.name) + '</label>' +
+      '<span class="inline">' +
+        '<input type="text" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" id="' + esc(inputId) + '">' +
+        (v.unit ? '<span class="unit">' + esc(v.unit) + '</span>' : '') +
+      '</span>';
+    const input = $('input', wrapEl);
+    input.value = draft.variables[v.id] == null ? '' : draft.variables[v.id];
+    input.addEventListener('input', () => { draft.variables[v.id] = input.value; markDirty(); });
+    host.appendChild(wrapEl);
+  });
+}
+
+function renderScoreFields() {
+  const host = $('#score-fields');
+  host.innerHTML = '';
+  SCORE_KEYS.forEach(pair => {
+    const key = pair[0], label = pair[1];
+    const block = document.createElement('div');
+    block.className = 'scoreblock';
+    let segs = '';
+    for (let n = 1; n <= 5; n++) {
+      segs += '<button class="seg" type="button" data-score="' + key + '" data-value="' + n + '" aria-pressed="false">' + n + '</button>';
+    }
+    block.innerHTML =
+      '<div class="lbl"><span>' + esc(label) + '</span><span class="v" id="sv-' + key + '">–</span></div>' +
+      '<div class="segs" role="group" aria-label="' + esc(label) + ' score">' + segs + '</div>';
+    host.appendChild(block);
+  });
+  paintScores();
+}
+
+function paintScores() {
+  SCORE_KEYS.forEach(pair => {
+    const key = pair[0];
+    const val = draft.scores[key];
+    $$('.seg[data-score="' + key + '"]').forEach(seg => {
+      seg.setAttribute('aria-pressed', String(Number(seg.dataset.value) === Number(val)));
+    });
+    $('#sv-' + key).textContent = val ? val + '/5' : '–';
+  });
+  const scored = hasScores(draft.scores);
+  $('#score-total').textContent = (scored ? scoreTotal(draft.scores) : '–') + '/20';
+}
+
+function setScore(key, value) {
+  /* Tapping the current value again clears it, so a batch can stay unscored. */
+  draft.scores[key] = (Number(draft.scores[key]) === value) ? null : value;
+  markDirty();
+  paintScores();
+}
+
+function renderPhotoGrid() {
+  const host = $('#photo-grid');
+  host.innerHTML = '';
+  host.hidden = !draft.photos.length;
+  draft.photos.forEach((blob, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'photo';
+    cell.innerHTML = '<img alt="Batch photo ' + (i + 1) + '" data-act="view-photo" data-index="' + i + '">' +
+                     '<button class="x" type="button" data-act="del-photo" data-index="' + i + '" aria-label="Delete photo ' + (i + 1) + '">&#10005;</button>';
+    $('img', cell).src = objUrl(blob);
+    host.appendChild(cell);
+  });
+}
+
+/* Resizing a 12MP shot is not instant. Queue the work and let saveDraft await it,
+   otherwise a quick tap on Save writes the batch without the photo. */
+let photoWork = Promise.resolve();
+
+function addPhotos(fileList) {
+  const files = Array.prototype.slice.call(fileList || []).filter(f => f && (!f.type || /^image\//.test(f.type)));
+  if (!files.length) return photoWork;
+  const target = draft;                                  // the batch these belong to
+  toast(files.length > 1 ? 'Adding ' + files.length + ' photos…' : 'Adding photo…');
+  photoWork = photoWork.then(async () => {
+    for (const file of files) {
+      try {
+        target.photos.push(await resizeImage(file));
+        if (target === draft) markDirty();
+      } catch (e) {
+        toast(e.message || 'Could not add that photo.');
+      }
+    }
+    if (target === draft && current === 'edit') renderPhotoGrid();
+  });
+  return photoWork;
+}
+
+async function saveDraft() {
+  await photoWork;                       // never save a batch mid-resize
+  draft.date    = $('#f-date').value || todayISO();
+  draft.notes   = $('#f-notes').value;
+  const ai      = $('#f-ainotes').value.trim();
+  draft.aiNotes = ai === '' ? null : ai;
+
+  const isNew = !draft.id;
+  if (isNew) draft.id = uid();
+  if (typeof draft.number !== 'number') draft.number = await nextNumber();
+
+  const record = {
+    id: draft.id,
+    number: draft.number,
+    date: draft.date,
+    notes: draft.notes,
+    photos: draft.photos,
+    variables: draft.variables,
+    scores: draft.scores,
+    total: scoreTotal(draft.scores),
+    aiNotes: draft.aiNotes,
+    createdAt: draft.createdAt || Date.now(),
+    updatedAt: Date.now()
+  };
+  try {
+    await dbPut('batches', record);
+  } catch (e) {
+    if (isNew) { draft.id = null; draft.number = null; }
+    await modal('Could not save', (e && e.name === 'QuotaExceededError')
+      ? 'This device is out of storage for the app. Delete some photos or older batches and try again.'
+      : 'IndexedDB refused the write: ' + (e && e.message ? e.message : e), [{ label:'OK', value:true, kind:'primary' }]);
+    return;
+  }
+  dirty = false;
+  bannerDismissed = false;
+  toast('Batch #' + record.number + ' saved');
+  await renderList();
+}
+
+async function deleteDraft() {
+  if (!draft.id) return renderList();
+  const ok = await confirmSheet('Delete batch #' + draft.number + '?',
+    'The batch, its photos and its scores are removed from this device. This cannot be undone.',
+    'Delete batch', 'danger');
+  if (!ok) return;
+  await dbDel('batches', draft.id);
+  dirty = false;
+  toast('Batch #' + draft.number + ' deleted');
+  await renderList();
+}
+
+async function leaveEdit() {
+  if (dirty) {
+    const choice = await modal('Discard changes?', 'This batch has unsaved edits.', [
+      { label: 'Save and close', value: 'save', kind: 'primary' },
+      { label: 'Discard', value: 'discard', kind: 'danger' },
+      { label: 'Keep editing', value: null }
+    ]);
+    if (choice === null) return;
+    if (choice === 'save') return saveDraft();
+  }
+  dirty = false;
+  await renderList();
+}
+
+/* =================== SCREEN 3 — compare =================== */
+const normVal = v => (v === undefined || v === null) ? '' : String(v).trim();
+const showVal = v => normVal(v) === '' ? '<span class="dash">\u2013</span>' : esc(normVal(v));
+
+function shortDate(iso, withYear) {
+  const p = String(iso || '').split('-').map(Number);
+  if (p.length !== 3 || !p[0]) return esc(String(iso || ''));
+  const d = new Date(p[0], p[1] - 1, p[2]);
+  if (isNaN(d)) return esc(String(iso));
+  const base = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return esc(withYear ? base + ' \u2019' + String(p[0]).slice(2) : base);
+}
+
+/* "Total 14 -> 17  +3", coloured by direction, blank delta when either side is unscored. */
+function deltaPill(label, from, to) {
+  const a = (from === null || from === undefined || from === '') ? NaN : Number(from);
+  const b = (to === null || to === undefined || to === '') ? NaN : Number(to);
+  const known = !isNaN(a) && !isNaN(b);
+  const d = known ? b - a : null;
+  const cls = d === null ? '' : d > 0 ? ' up' : d < 0 ? ' down' : '';
+  const dash = '\u2013';
+  const move = d === null ? '' : d === 0 ? '  no change' : '  ' + (d > 0 ? '+' + d : '\u2212' + Math.abs(d));
+  return '<span class="delta' + cls + '">' +
+    esc(label + ' ' + (isNaN(a) ? dash : a) + ' \u2192 ' + (isNaN(b) ? dash : b) + move) + '</span>';
+}
+
+async function renderCompare() {
+  show('compare');
+  setBar('Compare', null, null);
+  const defs = await getVars();
+  const batches = (await getBatches()).reverse();      // oldest first: newest ends up on the right
+  const tableHost = $('#compare-table'), chgHost = $('#compare-changes');
+
+  if (!batches.length) {
+    tableHost.innerHTML = '<p class="empty">Nothing to compare yet.<br>Log a batch first.</p>';
+    chgHost.innerHTML = '';
+    return;
+  }
+
+  const years = {};
+  batches.forEach(b => { years[String(b.date || '').slice(0, 4)] = 1; });
+  const multiYear = Object.keys(years).length > 1;
+
+  const riseOf = b => Number(b.scores && b.scores.rise) || 0;
+  const bestRise = batches.reduce((max, b) => Math.max(max, riseOf(b)), 0);
+  const isBest = b => bestRise > 0 && riseOf(b) === bestRise;
+  const winners = batches.filter(isBest);
+  const mark = b => isBest(b) ? ' class="best"' : '';
+
+  let html = '<p class="note" style="margin:0 0 10px">Newest batch on the right. Swipe the table sideways.</p>'
+    + '<div class="cmp-wrap"><div class="cmp-scroll"><table class="cmp">'
+    + '<thead><tr><th class="rowhead">Batch</th>'
+    + batches.map(b => '<th' + mark(b) + '>#' + esc(b.number)
+        + '<span class="d">' + shortDate(b.date, multiYear) + '</span>'
+        + (isBest(b) ? '<span class="badge">Best rise</span>' : '') + '</th>').join('')
+    + '</tr></thead><tbody>';
+
+  if (defs.length) {
+    html += '<tr class="sect"><th class="rowhead">Variables</th><td colspan="' + batches.length + '"></td></tr>';
+    defs.forEach(d => {
+      html += '<tr><th class="rowhead">' + esc(d.name)
+        + (d.unit ? '<span class="unit">' + esc(d.unit) + '</span>' : '') + '</th>'
+        + batches.map(b => '<td' + mark(b) + '>' + showVal(b.variables && b.variables[d.id]) + '</td>').join('')
+        + '</tr>';
+    });
+  }
+
+  html += '<tr class="sect"><th class="rowhead">Scores</th><td colspan="' + batches.length + '"></td></tr>';
+  SCORE_KEYS.forEach(pair => {
+    html += '<tr><th class="rowhead">' + esc(pair[1]) + '</th>'
+      + batches.map(b => {
+          const v = b.scores ? b.scores[pair[0]] : null;
+          return '<td' + mark(b) + '>' + (v ? esc(v) : '<span class="dash">\u2013</span>') + '</td>';
+        }).join('') + '</tr>';
+  });
+  html += '<tr class="total"><th class="rowhead">Total</th>'
+    + batches.map(b => '<td' + mark(b) + '>' + (hasScores(b.scores)
+        ? scoreTotal(b.scores) + '<span class="dash">/20</span>'
+        : '<span class="dash">\u2013</span>') + '</td>').join('')
+    + '</tr></tbody></table></div></div>';
+
+  if (bestRise) {
+    html += '<p class="note">' + (winners.length > 1
+      ? winners.map(b => '#' + esc(b.number)).join(', ') + ' tie on rise at ' + bestRise + '/5.'
+      : 'Batch #' + esc(winners[0].number) + ' has the best rise at ' + bestRise + '/5.') + '</p>';
+  }
+  tableHost.innerHTML = html;
+
+  /* ---- what changed: every batch against the one before it, newest first ---- */
+  let chg = '<div class="section"><span class="grouplabel">What changed</span>';
+  if (batches.length < 2) {
+    chg += '<p class="nochg" style="margin-top:8px">Only one batch so far. The next one gets compared against it.</p>';
+    chgHost.innerHTML = chg + '</div>';
+    return;
+  }
+  chg += '<p class="note" style="margin:0 0 12px">Each batch against the one before it.</p>';
+  for (let i = batches.length - 1; i >= 1; i--) {
+    const prev = batches[i - 1], cur = batches[i];
+    const diffs = defs.filter(d =>
+      normVal(prev.variables && prev.variables[d.id]) !== normVal(cur.variables && cur.variables[d.id]));
+    chg += '<div class="chgcard">'
+      + '<div class="chghead"><span class="pair">#' + esc(prev.number) + ' \u2192 #' + esc(cur.number) + '</span>'
+      + '<span class="dates">' + shortDate(prev.date, multiYear) + ' \u2192 ' + shortDate(cur.date, multiYear) + '</span></div>';
+    chg += diffs.length
+      ? '<ul class="diffs">' + diffs.map(d =>
+          '<li><span class="dn">' + esc(d.name) + '</span><span class="dv">'
+          + showVal(prev.variables && prev.variables[d.id]) + ' \u2192 '
+          + showVal(cur.variables && cur.variables[d.id])
+          + (d.unit ? ' ' + esc(d.unit) : '') + '</span></li>').join('') + '</ul>'
+      : '<p class="nochg">No variable changes.</p>';
+    chg += '<div class="deltas">'
+      + deltaPill('Total', hasScores(prev.scores) ? scoreTotal(prev.scores) : null,
+                           hasScores(cur.scores) ? scoreTotal(cur.scores) : null)
+      + deltaPill('Rise', prev.scores && prev.scores.rise, cur.scores && cur.scores.rise)
+      + '</div></div>';
+  }
+  chgHost.innerHTML = chg + '</div>';
+}
+
+/* =================== SCREEN 4 — settings =================== */
+let settingsVars = [];
+let varSaveTimer = null;
+const varsToSave = new Set();
+
+function scheduleVarSave(def) {
+  varsToSave.add(def);
+  clearTimeout(varSaveTimer);
+  varSaveTimer = setTimeout(flushVarSaves, 350);
+}
+async function flushVarSaves() {
+  clearTimeout(varSaveTimer);
+  if (!varsToSave.size) return;
+  const defs = Array.from(varsToSave);
+  varsToSave.clear();
+  const s = await txStore('vars', 'readwrite');
+  defs.forEach(d => s.put(d));
+  await txDone(s.transaction);
+}
+
+async function renderSettings() {
+  show('settings');
+  setBar('Settings', null, null);
+  settingsVars = await getVars();
+  paintVarList();
+
+  const batches = await getBatches();
+  $('#stat-batches').textContent = batches.length + (batches.length === 1 ? ' batch' : ' batches');
+  $('#stat-export').textContent  = fmtStamp(Number(await getMeta('lastExportAt')) || 0);
+}
+
+function paintVarList() {
+  const host = $('#var-list');
+  host.innerHTML = '';
+  if (!settingsVars.length) {
+    host.innerHTML = '<p class="note" style="margin:0 0 12px">No variables. Add the ones you actually change between bakes.</p>';
+    return;
+  }
+  settingsVars.forEach((def, i) => {
+    const row = document.createElement('div');
+    row.className = 'varrow';
+    row.innerHTML =
+      '<div class="grid">' +
+        '<input type="text" data-f="name" placeholder="Name" autocapitalize="words" autocomplete="off">' +
+        '<input type="text" data-f="unit" placeholder="Unit" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false">' +
+        '<input type="text" data-f="defaultValue" placeholder="Default" inputmode="decimal" autocomplete="off">' +
+      '</div>' +
+      '<div class="tools">' +
+        '<button class="btn small" type="button" data-act="var-up" data-i="' + i + '" aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>&#8593;</button>' +
+        '<button class="btn small" type="button" data-act="var-down" data-i="' + i + '" aria-label="Move down"' + (i === settingsVars.length - 1 ? ' disabled' : '') + '>&#8595;</button>' +
+        '<span class="sp"></span>' +
+        '<button class="btn small danger" type="button" data-act="var-del" data-i="' + i + '">Delete</button>' +
+      '</div>';
+    $$('input', row).forEach(input => {
+      const field = input.dataset.f;
+      input.value = def[field] == null ? '' : def[field];
+      input.addEventListener('input', () => { def[field] = input.value; scheduleVarSave(def); });
+    });
+    host.appendChild(row);
+  });
+}
+
+async function addVar() {
+  await flushVarSaves();
+  const def = { id: uid(), name: '', unit: '', defaultValue: '', order: settingsVars.length };
+  await dbPut('vars', def);
+  settingsVars.push(def);
+  paintVarList();
+  const rows = $$('#var-list .varrow');
+  const input = rows.length ? $('input[data-f=name]', rows[rows.length - 1]) : null;
+  if (input) { input.focus(); input.scrollIntoView({ block: 'center' }); }
+}
+
+async function reorderVar(index, delta) {
+  const target = index + delta;
+  if (target < 0 || target >= settingsVars.length) return;
+  const tmp = settingsVars[index];
+  settingsVars[index] = settingsVars[target];
+  settingsVars[target] = tmp;
+  settingsVars.forEach((d, i) => { d.order = i; });
+  const s = await txStore('vars', 'readwrite');
+  settingsVars.forEach(d => s.put(d));
+  await txDone(s.transaction);
+  paintVarList();
+}
+
+async function deleteVar(index) {
+  const def = settingsVars[index];
+  if (!def) return;
+  const ok = await confirmSheet('Delete "' + (def.name || 'this variable') + '"?',
+    'New batches stop asking for it. Past batches keep the value they recorded, it just will not be shown.',
+    'Delete variable', 'danger');
+  if (!ok) return;
+  await flushVarSaves();
+  await dbDel('vars', def.id);
+  settingsVars.splice(index, 1);
+  settingsVars.forEach((d, i) => { d.order = i; });
+  const s = await txStore('vars', 'readwrite');
+  settingsVars.forEach(d => s.put(d));
+  await txDone(s.transaction);
+  paintVarList();
+}
+
+/* ------------------------- export / import ---------------------------- */
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+function blobToB64(blob) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload  = () => { const s = String(fr.result); resolve(s.slice(s.indexOf(',') + 1)); };
+    fr.onerror = () => reject(fr.error || new Error('Could not read a photo.'));
+    fr.readAsDataURL(blob);
+  });
+}
+function b64ToBytes(b64) {
+  const clean = String(b64).replace(/[^A-Za-z0-9+/]/g, '');
+  const out = new Uint8Array(Math.floor(clean.length * 3 / 4));
+  let bits = 0, acc = 0, p = 0;
+  for (let i = 0; i < clean.length; i++) {
+    acc = (acc << 6) | B64.indexOf(clean.charAt(i));
+    bits += 6;
+    if (bits >= 8) { bits -= 8; out[p++] = (acc >> bits) & 255; }
+  }
+  return out.subarray(0, p);
+}
+
+async function buildExport() {
+  const [vars, batches] = [await getVars(), await getBatches()];
+  const out = [];
+  for (const b of batches) {
+    const photos = [];
+    for (const blob of (b.photos || [])) {
+      if (!(blob instanceof Blob)) continue;
+      photos.push({ type: blob.type || 'image/jpeg', size: blob.size, data: await blobToB64(blob) });
+    }
+    out.push({
+      id: b.id, number: b.number, date: b.date, notes: b.notes || '',
+      variables: b.variables || {}, scores: b.scores || {},
+      total: scoreTotal(b.scores), aiNotes: b.aiNotes == null ? null : b.aiNotes,
+      createdAt: b.createdAt || null, updatedAt: b.updatedAt || null,
+      photos: photos
+    });
+  }
+  return {
+    app: 'bagel-log', schema: 1, exportedAt: new Date().toISOString(),
+    variableDefs: vars.map(v => ({ id: v.id, name: v.name, unit: v.unit, defaultValue: v.defaultValue, order: v.order })),
+    batches: out
+  };
+}
+
+async function exportData() {
+  await flushVarSaves();
+  const batches = await getBatches();
+  if (!batches.length && !(await getVars()).length) return toast('Nothing to export yet.');
+  toast('Building backup…');
+  let payload;
+  try { payload = await buildExport(); }
+  catch (e) { return modal('Export failed', String(e && e.message || e), [{ label:'OK', value:true, kind:'primary' }]); }
+
+  const name = 'bagel-log-' + todayISO() + '.json';
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const file = (self.File) ? new File([blob], name, { type: 'application/json' }) : null;
+
+  /* iOS: hand it to the share sheet (Files, Mail, AirDrop). Elsewhere: download. */
+  if (file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share({ files: [file], title: 'Bagel Log backup' });
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;         // user cancelled: not a backup
+      downloadBlob(blob, name);
+    }
+  } else {
+    downloadBlob(blob, name);
+  }
+  await setMeta('lastExportAt', Date.now());
+  bannerDismissed = false;
+  toast('Backed up ' + batches.length + ' batch' + (batches.length === 1 ? '' : 'es'));
+  if (current === 'settings') $('#stat-export').textContent = fmtStamp(Date.now());
+  if (current === 'list') await renderBackupBanner(batches);
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+async function importFile(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); }
+  catch (e) { return modal('Not a backup file', 'That file is not valid JSON.', [{ label:'OK', value:true, kind:'primary' }]); }
+  if (!data || !Array.isArray(data.batches) || !Array.isArray(data.variableDefs)) {
+    return modal('Not a backup file', 'No Bagel Log batches or variables found in that file.', [{ label:'OK', value:true, kind:'primary' }]);
+  }
+
+  const mode = await modal('Import backup',
+    data.batches.length + ' batch' + (data.batches.length === 1 ? '' : 'es') + ' and ' +
+    data.variableDefs.length + ' variable' + (data.variableDefs.length === 1 ? '' : 's') +
+    (data.exportedAt ? '\nExported ' + fmtStamp(Date.parse(data.exportedAt)) : ''),
+    [
+      { label: 'Replace everything', value: 'replace', kind: 'danger' },
+      { label: 'Merge into this log', value: 'merge', kind: 'primary' },
+      { label: 'Cancel', value: null }
+    ]);
+  if (!mode) return;
+
+  toast('Importing…');
+  const defs = data.variableDefs.map((v, i) => ({
+    id: String(v.id || uid()), name: String(v.name || ''), unit: String(v.unit || ''),
+    defaultValue: v.defaultValue == null ? '' : String(v.defaultValue),
+    order: typeof v.order === 'number' ? v.order : i
+  }));
+
+  const batches = [];
+  for (const b of data.batches) {
+    const photos = [];
+    for (const p of (Array.isArray(b.photos) ? b.photos : [])) {
+      if (!p || !p.data) continue;
+      try { photos.push(new Blob([b64ToBytes(p.data)], { type: p.type || 'image/jpeg' })); } catch (e) {}
+    }
+    const scores = {};
+    SCORE_KEYS.forEach(k => {
+      const n = Number(b.scores ? b.scores[k[0]] : null);
+      scores[k[0]] = (n >= 1 && n <= 5) ? Math.round(n) : null;
+    });
+    batches.push({
+      id: String(b.id || uid()),
+      number: Number(b.number) || 0,
+      date: String(b.date || todayISO()).slice(0, 10),
+      notes: b.notes == null ? '' : String(b.notes),
+      photos: photos,
+      variables: (b.variables && typeof b.variables === 'object') ? b.variables : {},
+      scores: scores,
+      total: scoreTotal(scores),
+      aiNotes: b.aiNotes == null ? null : String(b.aiNotes),
+      createdAt: Number(b.createdAt) || Date.now(),
+      updatedAt: Number(b.updatedAt) || Date.now()
+    });
+  }
+
+  try {
+    if (mode === 'replace') {
+      const db = await openDB();
+      const tx = db.transaction(['batches', 'vars'], 'readwrite');
+      tx.objectStore('batches').clear();
+      tx.objectStore('vars').clear();
+      defs.forEach(d => tx.objectStore('vars').put(d));
+      batches.forEach(b => tx.objectStore('batches').put(b));
+      await txDone(tx);
+    } else {
+      const haveVars = await getVars();
+      const varIds = new Set(haveVars.map(v => v.id));
+      const haveBatches = await getBatches();
+      const batchIds = new Set(haveBatches.map(b => b.id));
+      const usedNumbers = new Set(haveBatches.map(b => b.number));
+      let nextOrder = haveVars.length;
+      let nextNum = haveBatches.reduce((m, b) => Math.max(m, b.number || 0), 0) + 1;
+
+      const db = await openDB();
+      const tx = db.transaction(['batches', 'vars'], 'readwrite');
+      defs.forEach(d => { if (!varIds.has(d.id)) { d.order = nextOrder++; tx.objectStore('vars').put(d); } });
+      batches.forEach(b => {
+        if (batchIds.has(b.id)) return;                       // already have it, keep ours
+        if (!b.number || usedNumbers.has(b.number)) b.number = nextNum++;
+        usedNumbers.add(b.number);
+        tx.objectStore('batches').put(b);
+      });
+      await txDone(tx);
+    }
+  } catch (e) {
+    return modal('Import failed', String(e && e.message || e), [{ label:'OK', value:true, kind:'primary' }]);
+  }
+
+  await setMeta('seeded', 1);
+  if (mode === 'replace') await setMeta('lastExportAt', Number(Date.parse(data.exportedAt)) || Date.now());
+  bannerDismissed = false;
+  toast('Imported ' + batches.length + ' batch' + (batches.length === 1 ? '' : 'es'));
+  await renderSettings();
+}
+
+/* ============================ event wiring ============================ */
+const ACTIONS = {
+  'tab':            el => goTab(el.dataset.tab),
+  'back-to-list':   () => current === 'edit' ? leaveEdit() : (flushVarSaves().then(renderList)),
+  'new-batch':      () => openBatch(null),
+  'open-batch':     el => openBatch(el.dataset.id),
+  'save':           () => saveDraft(),
+  'delete':         () => deleteDraft(),
+  'camera':         () => $('#f-camera').click(),
+  'library':        () => $('#f-library').click(),
+  'view-photo':     el => showPhoto(draft.photos[Number(el.dataset.index)]),
+  'del-photo':      el => { draft.photos.splice(Number(el.dataset.index), 1); markDirty(); renderPhotoGrid(); },
+  'add-var':        () => addVar(),
+  'var-up':         el => reorderVar(Number(el.dataset.i), -1),
+  'var-down':       el => reorderVar(Number(el.dataset.i), 1),
+  'var-del':        el => deleteVar(Number(el.dataset.i)),
+  'export':         () => exportData(),
+  'import':         () => $('#f-import').click(),
+  'dismiss-banner': () => { bannerDismissed = true; $('#backup-banner').hidden = true; },
+  'reload':         () => location.reload()
+};
+
+document.addEventListener('click', e => {
+  const seg = e.target.closest ? e.target.closest('.seg[data-score]') : null;
+  if (seg) { setScore(seg.dataset.score, Number(seg.dataset.value)); return; }
+  const el = e.target.closest ? e.target.closest('[data-act]') : null;
+  if (!el || el.disabled) return;
+  const fn = ACTIONS[el.dataset.act];
+  if (!fn) return;
+  e.preventDefault();
+  Promise.resolve(fn(el)).catch(err => {
+    console.error(err);
+    toast(err && err.message ? err.message : 'Something went wrong.');
+  });
+});
+
+$('#f-camera').addEventListener('change', function () { addPhotos(this.files); this.value = ''; });
+$('#f-library').addEventListener('change', function () { addPhotos(this.files); this.value = ''; });
+$('#f-import').addEventListener('change', function () {
+  const f = this.files && this.files[0];
+  this.value = '';
+  if (f) importFile(f).catch(err => modal('Import failed', String(err && err.message || err), [{ label:'OK', value:true, kind:'primary' }]));
+});
+$('#f-date').addEventListener('change', markDirty);
+$('#f-notes').addEventListener('input', markDirty);
+$('#f-ainotes').addEventListener('input', markDirty);
+window.addEventListener('pagehide', () => { flushVarSaves(); });
+
+/* ================================ boot ================================ */
+(async function boot() {
+  try {
+    await openDB();
+    await ensureSeed();
+    await renderList();
+  } catch (e) {
+    console.error(e);
+    show('list');
+    setBar('Bagel Log', null, null);
+    $('#cards').innerHTML = '<p class="empty">This browser will not open local storage for the app.<br>' +
+      'Private Browsing blocks it on some versions of Safari.<br><br>' + esc(String(e && e.message || e)) + '</p>';
+  }
+})();
+
+/* Service worker: offline shell + update prompt. Skipped on file:// */
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+            const el = $('#toast');
+            el.innerHTML = 'New version ready. <button class="btn link" type="button" data-act="reload" style="color:var(--bg);text-decoration:underline;min-height:auto;padding:0">Reload</button>';
+            el.hidden = false;
+            clearTimeout(toastTimer);
+          }
+        });
+      });
+    }).catch(err => console.warn('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
