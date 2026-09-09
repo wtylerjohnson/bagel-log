@@ -1,10 +1,22 @@
-/* Bagel Log service worker — offline app shell.
+/* Bakebook with two-stage entry and home-screen batch removal.
+   Bagel Log service worker — offline app shell.
    Bump CACHE when you edit index.html so phones pick the new build up. */
-const CACHE = 'bagel-log-v5';
+const CACHE = 'bagel-log-v8';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './bakebook.css',
+  './assets/mascot.png',
+  './assets/fraunces.ttf',
+  './assets/home.svg',
+  './assets/chart-bar.svg',
+  './assets/settings.svg',
+  './assets/plus.svg',
+  './assets/camera.svg',
+  './assets/photo.svg',
+  './assets/star.svg',
+  './assets/x.svg',
   './icon-180.png',
   './icon-192.png',
   './icon-512.png',

@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Bagel Log">
 <meta name="format-detection" content="telephone=no">
-<meta name="theme-color" content="#f6f4f1" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fff4bd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#fff4bd" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -222,6 +222,7 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
   font-size:15px;text-align:center;
 }
 </style>
+<link rel="stylesheet" href="bakebook.css">
 </head>
 <body>
 
@@ -236,26 +237,43 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
 <main>
   <!-- ============ 1. BATCH LIST ============ -->
   <section id="screen-list" hidden>
-    <div id="backup-banner" class="banner" hidden></div>
-    <button class="btn primary wide" data-act="new-batch" style="margin-bottom:14px">New batch</button>
+    <div class="bakebook-hero">
+      <div class="brand-copy"><h1 class="brand-title">Bagel<br>Log</h1><p>A little better<br>every bake.</p></div>
+      <img class="mascot" src="assets/mascot.png" width="1024" height="1024" alt="A smiling sesame bagel baker holding a pencil and notebook">
+    </div>
+    <button class="btn primary wide new-batch" data-act="new-batch"><span class="icon" style="--icon:url('./assets/plus.svg')" aria-hidden="true"></span>New batch</button>
+    <div class="bakes-heading"><h2>Fresh from your oven</h2><span id="bake-count"></span></div>
     <div id="cards" class="stack"></div>
+    <p class="kitchen-signoff">Better bagels.<br>Brighter days.</p>
+    <div id="backup-banner" class="banner" hidden></div>
   </section>
 
   <!-- ============ 2. BATCH EDIT ============ -->
   <section id="screen-edit" hidden>
+    <div class="entry-steps" aria-label="Batch stages">
+      <button type="button" data-act="edit-step-one" id="step-one-button" aria-controls="entry-step-one">1. Mix &amp; bake</button>
+      <button type="button" data-act="edit-step-two" id="step-two-button" aria-controls="entry-step-two">2. Taste &amp; rate</button>
+    </div>
+    <div id="entry-step-one">
+    <div class="page-intro"><h2>First, the dough.</h2><p>Log your ingredients and baking details as you go. Save now and come back after the bake.</p></div>
     <div class="field">
       <label for="f-date">Date</label>
       <input type="date" id="f-date">
     </div>
 
     <div id="var-fields"></div>
+    <button class="btn primary wide" type="button" data-act="save">Save &amp; finish later</button>
+    <button class="btn wide next-stage" type="button" data-act="edit-step-two">Bagels are baked — next</button>
+    </div>
 
+    <div id="entry-step-two" hidden>
+    <div class="page-intro"><h2>How did they turn out?</h2><p>Snap your finished bagels, rate the bake, and jot down what to try next.</p></div>
     <div class="section">
       <span class="grouplabel">Photos</span>
       <div class="photos" id="photo-grid"></div>
       <div class="photobtns">
-        <button class="btn" type="button" data-act="camera">Take photo</button>
-        <button class="btn" type="button" data-act="library">Add from library</button>
+        <button class="btn" type="button" data-act="camera"><span class="icon" style="--icon:url('./assets/camera.svg')" aria-hidden="true"></span>Take photo</button>
+        <button class="btn" type="button" data-act="library"><span class="icon" style="--icon:url('./assets/photo.svg')" aria-hidden="true"></span>Add from library</button>
       </div>
       <input class="hidden-input" type="file" id="f-camera" accept="image/*" capture="environment">
       <input class="hidden-input" type="file" id="f-library" accept="image/*" multiple>
@@ -281,18 +299,21 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
       </div>
     </div>
 
-    <button class="btn primary wide" type="button" data-act="save" style="margin-bottom:10px">Save batch</button>
+    <button class="btn primary wide" type="button" data-act="save" style="margin-bottom:10px">Save photos &amp; ratings</button>
+    </div>
     <button class="btn danger wide" type="button" data-act="delete" id="btn-delete">Delete batch</button>
   </section>
 
   <!-- ============ 3. COMPARE ============ -->
   <section id="screen-compare" hidden>
+    <div class="page-intro"><h2>A little better every bake.</h2><p>See what changed, what rose, and what’s worth trying again.</p></div>
     <div id="compare-table"></div>
     <div id="compare-changes"></div>
   </section>
 
   <!-- ============ 4. SETTINGS ============ -->
   <section id="screen-settings" hidden>
+    <div class="page-intro"><h2>Your kitchen, your rules.</h2><p>Choose what you track and keep your bakebook backed up.</p></div>
     <span class="grouplabel">Variables</span>
     <p class="note" style="margin:0 0 12px">Every batch records these. Editing a name or unit updates it everywhere; the default is used for your very first batch.</p>
     <div class="caps"><span>Name</span><span>Unit</span><span>Default</span></div>
@@ -310,16 +331,16 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
     </div>
 
     <div class="section">
-      <div class="kv"><span>Bagel Log</span><span id="stat-version">v1</span></div>
+      <div class="kv"><span>Bagel Log</span><span id="stat-version">Bakebook · v8</span></div>
       <div class="kv"><span>Storage</span><span id="stat-storage">IndexedDB, this device</span></div>
     </div>
   </section>
 </main>
 
 <nav id="tabbar" hidden>
-  <button class="tab" type="button" data-act="tab" data-tab="list">Batches</button>
-  <button class="tab" type="button" data-act="tab" data-tab="compare">Compare</button>
-  <button class="tab" type="button" data-act="tab" data-tab="settings">Settings</button>
+  <button class="tab" type="button" data-act="tab" data-tab="list"><span class="icon" style="--icon:url('./assets/home.svg')" aria-hidden="true"></span>Batches</button>
+  <button class="tab" type="button" data-act="tab" data-tab="compare"><span class="icon" style="--icon:url('./assets/chart-bar.svg')" aria-hidden="true"></span>Compare</button>
+  <button class="tab" type="button" data-act="tab" data-tab="settings"><span class="icon" style="--icon:url('./assets/settings.svg')" aria-hidden="true"></span>Settings</button>
 </nav>
 
 <div id="modal" hidden></div>
@@ -420,7 +441,6 @@ async function nextNumber() {
 
 /* --------------------------- domain helpers --------------------------- */
 const SEED_VARS = [
-  { name: 'Humidity',               unit: '%',   defaultValue: ''    },
   { name: 'Flour',                  unit: 'g',   defaultValue: '1000'},
   { name: 'Water',                  unit: 'g',   defaultValue: '580' },
   { name: 'Diastatic malt powder',  unit: 'g',   defaultValue: '10'  },
@@ -447,7 +467,8 @@ const byOrder = (a, b) => (a.order - b.order) || String(a.name).localeCompare(St
 /* Newest first: date descending, then batch number descending. */
 const byNewest = (a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.number - a.number);
 
-const getVars    = async () => (await dbAll('vars')).sort(byOrder);
+/* Hide humidity for now; retain its old definitions and values in backups. */
+const getVars    = async () => (await dbAll('vars')).filter(v => String(v.name).trim().toLowerCase() !== 'humidity').sort(byOrder);
 const getBatches = async () => (await dbAll('batches')).sort(byNewest);
 
 const scoreTotal = scores => SCORE_KEYS.reduce((sum, k) => sum + (Number(scores && scores[k[0]]) || 0), 0);
@@ -579,6 +600,7 @@ function setBar(title, left, right) {
 function show(name) {
   releaseUrls();
   current = name;
+  document.body.dataset.screen = name;
   SCREENS.forEach(s => { $('#screen-' + s).hidden = (s !== name); });
   /* Editing is a full-screen task with its own Back/Save: no tabs under it. */
   const tabs = name !== 'edit';
@@ -607,10 +629,11 @@ async function renderList() {
 
   const batches = await getBatches();
   const host = $('#cards');
+  $('#bake-count').textContent = batches.length + (batches.length === 1 ? ' bake' : ' bakes');
   host.innerHTML = '';
 
   if (!batches.length) {
-    host.innerHTML = '<p class="empty">No batches yet.<br>Tap <strong>New batch</strong> after your next bake.</p>';
+    host.innerHTML = '<p class="empty"><strong>Your first batch starts here.</strong>Fresh out of the oven? Tap New batch to save a photo and jot down how it went.</p>';
   } else {
     batches.forEach(b => {
       const total = scoreTotal(b.scores);
@@ -625,10 +648,10 @@ async function renderList() {
         '<span class="thumb"></span>' +
         '<span class="cardbody">' +
           '<span class="cardtop">' +
-            '<span class="num">#' + esc(b.number) + '</span>' +
-            '<span class="total' + (scored ? '' : ' none') + '">' + (scored ? total + '/20' : 'unscored') + '</span>' +
+            '<span class="num">Batch #' + esc(b.number) + '</span>' +
           '</span>' +
           '<span class="cardsub">' + esc(fmtDate(b.date)) + (photos ? ' &middot; ' + photos + ' photo' + (photos > 1 ? 's' : '') : '') + '</span>' +
+          '<span class="total' + (scored ? '' : ' none') + '">' + (scored ? '<span class="icon score-star" aria-hidden="true"></span>' + total + ' / 20' : 'Add photo &amp; rate') + '</span>' +
           (b.notes ? '<span class="cardnote">' + esc(String(b.notes).split('\n')[0]) + '</span>' : '') +
         '</span>';
       const thumb = $('.thumb', el);
@@ -639,9 +662,22 @@ async function renderList() {
         img.src = objUrl(b.photos[0]);
         thumb.appendChild(img);
       } else {
-        thumb.textContent = '◎';                 // ring glyph placeholder
+        thumb.classList.add('no-photo');
+        thumb.innerHTML = '<img src="assets/mascot.png" alt=""><small>No photo yet</small>';
       }
-      host.appendChild(el);
+      const row = document.createElement('div');
+      row.className = 'batch-row';
+      row.appendChild(el);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'batch-remove';
+      remove.dataset.act = 'delete-batch';
+      remove.dataset.id = b.id;
+      remove.setAttribute('aria-label', 'Delete batch #' + b.number);
+      remove.title = 'Delete batch #' + b.number;
+      remove.innerHTML = '<span class="icon" aria-hidden="true" style="--icon:url(\'./assets/x.svg\')"></span>';
+      row.appendChild(remove);
+      host.appendChild(row);
     });
   }
   await renderBackupBanner(batches);
@@ -670,6 +706,8 @@ async function renderBackupBanner(batches) {
 let draft = null;          // the batch being edited (photos are live Blobs)
 let draftVars = [];        // VariableDefs at the time the screen opened
 let dirty = false;
+let editStep = 1;
+let savingDraft = false;
 const markDirty = () => { dirty = true; };
 
 async function openBatch(id) {
@@ -719,6 +757,26 @@ async function openBatch(id) {
   renderVarFields();
   renderScoreFields();
   renderPhotoGrid();
+  setEditStep(isNew ? 1 : 2);
+}
+
+function setEditStep(step) {
+  editStep = step;
+  $('#entry-step-one').hidden = step !== 1;
+  $('#entry-step-two').hidden = step !== 2;
+  [1, 2].forEach(n => {
+    const button = $(n === 1 ? '#step-one-button' : '#step-two-button');
+    button.classList.toggle('active', n === step);
+    if (n === step) button.setAttribute('aria-current', 'step');
+    else button.removeAttribute('aria-current');
+  });
+  window.scrollTo(0, 0);
+}
+
+async function goToRating() {
+  if (editStep === 2 || savingDraft) return;
+  // Persist ingredients before moving on, so stage one survives a later visit.
+  await saveDraft('rate');
 }
 
 function renderVarFields() {
@@ -821,7 +879,10 @@ function addPhotos(fileList) {
   return photoWork;
 }
 
-async function saveDraft() {
+async function saveDraft(next = 'list') {
+  if (savingDraft) return;
+  savingDraft = true;
+  try {
   await photoWork;                       // never save a batch mid-resize
   draft.date    = $('#f-date').value || todayISO();
   draft.notes   = $('#f-notes').value;
@@ -856,20 +917,37 @@ async function saveDraft() {
   }
   dirty = false;
   bannerDismissed = false;
-  toast('Batch #' + record.number + ' saved');
+  toast(next === 'rate' ? 'Ingredients saved. Time for the taste test.' : 'Batch #' + record.number + ' saved');
+  if (next === 'rate') {
+    setBar('Batch #' + record.number,
+      { label: 'Back', act: 'back-to-list' },
+      { label: 'Save', act: 'save', strong: true });
+    $('#btn-delete').hidden = false;
+    setEditStep(2);
+  } else {
+    await renderList();
+  }
+  } finally {
+    savingDraft = false;
+  }
+}
+
+async function deleteBatch(id) {
+  const batch = await dbGet('batches', id);
+  if (!batch) return renderList();
+  const ok = await confirmSheet('Delete batch #' + batch.number + '?',
+    'This removes the whole batch, including its ingredients, photos and ratings. This cannot be undone.',
+    'Delete batch', 'danger');
+  if (!ok) return;
+  await dbDel('batches', batch.id);
+  dirty = false;
+  toast('Batch #' + batch.number + ' deleted');
   await renderList();
 }
 
 async function deleteDraft() {
   if (!draft.id) return renderList();
-  const ok = await confirmSheet('Delete batch #' + draft.number + '?',
-    'The batch, its photos and its scores are removed from this device. This cannot be undone.',
-    'Delete batch', 'danger');
-  if (!ok) return;
-  await dbDel('batches', draft.id);
-  dirty = false;
-  toast('Batch #' + draft.number + ' deleted');
-  await renderList();
+  return deleteBatch(draft.id);
 }
 
 async function leaveEdit() {
@@ -920,7 +998,7 @@ async function renderCompare() {
   const tableHost = $('#compare-table'), chgHost = $('#compare-changes');
 
   if (!batches.length) {
-    tableHost.innerHTML = '<p class="empty">Nothing to compare yet.<br>Log a batch first.</p>';
+    tableHost.innerHTML = '<p class="empty"><strong>Good things are rising.</strong>Log your first batch to start your comparison notebook.</p>';
     chgHost.innerHTML = '';
     return;
   }
@@ -1132,7 +1210,7 @@ function b64ToBytes(b64) {
 }
 
 async function buildExport() {
-  const [vars, batches] = [await getVars(), await getBatches()];
+  const [vars, batches] = [(await dbAll('vars')).sort(byOrder), await getBatches()];
   const out = [];
   for (const b of batches) {
     const photos = [];
@@ -1259,7 +1337,7 @@ async function importFile(file) {
       batches.forEach(b => tx.objectStore('batches').put(b));
       await txDone(tx);
     } else {
-      const haveVars = await getVars();
+      const haveVars = await dbAll('vars');
       const varIds = new Set(haveVars.map(v => v.id));
       const haveBatches = await getBatches();
       const batchIds = new Set(haveBatches.map(b => b.id));
@@ -1296,7 +1374,10 @@ const ACTIONS = {
   'new-batch':      () => openBatch(null),
   'open-batch':     el => openBatch(el.dataset.id),
   'save':           () => saveDraft(),
+  'edit-step-one':  () => { if (!savingDraft) setEditStep(1); },
+  'edit-step-two':  () => goToRating(),
   'delete':         () => deleteDraft(),
+  'delete-batch':    el => deleteBatch(el.dataset.id),
   'camera':         () => $('#f-camera').click(),
   'library':        () => $('#f-library').click(),
   'view-photo':     el => showPhoto(draft.photos[Number(el.dataset.index)]),
