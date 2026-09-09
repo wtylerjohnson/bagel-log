@@ -331,7 +331,7 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
     </div>
 
     <div class="section">
-      <div class="kv"><span>Bagel Log</span><span id="stat-version">Bakebook · v8</span></div>
+      <div class="kv"><span>Bagel Log</span><span id="stat-version">Bakebook · v9</span></div>
       <div class="kv"><span>Storage</span><span id="stat-storage">IndexedDB, this device</span></div>
     </div>
   </section>
@@ -443,6 +443,7 @@ async function nextNumber() {
 const SEED_VARS = [
   { name: 'Flour',                  unit: 'g',   defaultValue: '1000'},
   { name: 'Water',                  unit: 'g',   defaultValue: '580' },
+  { name: 'Honey',                  unit: 'g',   defaultValue: ''    },
   { name: 'Diastatic malt powder',  unit: 'g',   defaultValue: '10'  },
   { name: 'Salt',                   unit: 'g',   defaultValue: '20'  },
   { name: 'Yeast',                  unit: 'g',   defaultValue: '6'   },
@@ -461,6 +462,32 @@ async function ensureSeed() {
     await txDone(s.transaction);
   }
   await setMeta('seeded', 1);
+}
+
+/* Upgrade existing installs once, atomically. Do not recreate a field the user
+   later removes, duplicate a custom Honey field, or change historical amounts. */
+async function ensureHoney() {
+  const db = await openDB();
+  const tx = db.transaction(['vars', 'meta'], 'readwrite');
+  const done = txDone(tx);
+  const vars = tx.objectStore('vars'), meta = tx.objectStore('meta');
+  const marker = meta.get('honey-grams-v1');
+  marker.onsuccess = () => {
+    if (marker.result) return;
+    const request = vars.getAll();
+    request.onsuccess = () => {
+      const defs = request.result;
+      const nameIs = (v, name) => String(v.name).trim().toLowerCase() === name;
+      if (!defs.some(v => nameIs(v, 'honey'))) {
+        const water = defs.find(v => nameIs(v, 'water'));
+        const order = water ? (Number(water.order) || 0) + 0.5
+          : defs.reduce((max, v) => Math.max(max, Number(v.order) || 0), -1) + 1;
+        vars.put({ id: uid(), name: 'Honey', unit: 'g', defaultValue: '', order });
+      }
+      meta.put({ key: 'honey-grams-v1', value: 1 });
+    };
+  };
+  await done;
 }
 
 const byOrder = (a, b) => (a.order - b.order) || String(a.name).localeCompare(String(b.name));
@@ -1423,6 +1450,7 @@ window.addEventListener('pagehide', () => { flushVarSaves(); });
   try {
     await openDB();
     await ensureSeed();
+    await ensureHoney();
     await renderList();
   } catch (e) {
     console.error(e);

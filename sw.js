@@ -1,7 +1,7 @@
-/* Bakebook with two-stage entry and home-screen batch removal.
+/* Bakebook with honey measured in grams.
    Bagel Log service worker — offline app shell.
    Bump CACHE when you edit index.html so phones pick the new build up. */
-const CACHE = 'bagel-log-v8';
+const CACHE = 'bagel-log-v9';
 const ASSETS = [
   './',
   './index.html',
