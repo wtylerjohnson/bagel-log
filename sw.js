@@ -1,7 +1,7 @@
-/* Bakebook with honey measured in grams.
+/* Bakebook with a playful animated bagel baker.
    Bagel Log service worker — offline app shell.
    Bump CACHE when you edit index.html so phones pick the new build up. */
-const CACHE = 'bagel-log-v9';
+const CACHE = 'bagel-log-v10';
 const ASSETS = [
   './',
   './index.html',

@@ -239,7 +239,7 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
   <section id="screen-list" hidden>
     <div class="bakebook-hero">
       <div class="brand-copy"><h1 class="brand-title">Bagel<br>Log</h1><p>A little better<br>every bake.</p></div>
-      <img class="mascot" src="assets/mascot.png" width="1024" height="1024" alt="A smiling sesame bagel baker holding a pencil and notebook">
+      <button class="mascot-button" type="button" data-act="mascot-wiggle" aria-label="Give the bagel baker a wiggle" title="Give me a little tap"><img class="mascot" src="assets/mascot.png" width="1024" height="1024" alt="A smiling sesame bagel baker holding a pencil and notebook"></button>
     </div>
     <button class="btn primary wide new-batch" data-act="new-batch"><span class="icon" style="--icon:url('./assets/plus.svg')" aria-hidden="true"></span>New batch</button>
     <div class="bakes-heading"><h2>Fresh from your oven</h2><span id="bake-count"></span></div>
@@ -331,7 +331,7 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
     </div>
 
     <div class="section">
-      <div class="kv"><span>Bagel Log</span><span id="stat-version">Bakebook · v9</span></div>
+      <div class="kv"><span>Bagel Log</span><span id="stat-version">Bakebook · v10</span></div>
       <div class="kv"><span>Storage</span><span id="stat-storage">IndexedDB, this device</span></div>
     </div>
   </section>
@@ -1399,6 +1399,14 @@ const ACTIONS = {
   'tab':            el => goTab(el.dataset.tab),
   'back-to-list':   () => current === 'edit' ? leaveEdit() : (flushVarSaves().then(renderList)),
   'new-batch':      () => openBatch(null),
+  'mascot-wiggle':  () => {
+    const mascot = $('.mascot');
+    toast('Good bagels. Happier days.');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    mascot.classList.remove('wiggling');
+    void mascot.offsetWidth; // Restart the short animation on another tap.
+    mascot.classList.add('wiggling');
+  },
   'open-batch':     el => openBatch(el.dataset.id),
   'save':           () => saveDraft(),
   'edit-step-one':  () => { if (!savingDraft) setEditStep(1); },
@@ -1432,6 +1440,8 @@ document.addEventListener('click', e => {
     toast(err && err.message ? err.message : 'Something went wrong.');
   });
 });
+
+$('.mascot').addEventListener('animationend', () => $('.mascot').classList.remove('wiggling'));
 
 $('#f-camera').addEventListener('change', function () { addPhotos(this.files); this.value = ''; });
 $('#f-library').addEventListener('change', function () { addPhotos(this.files); this.value = ''; });

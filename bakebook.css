@@ -13,7 +13,7 @@ body[data-screen=list] main{padding-top:calc(20px + env(safe-area-inset-top))}
 .brand-title{font-size:clamp(52px,15vw,76px);line-height:.91;font-weight:950;letter-spacing:-.055em;margin:0 0 14px}
 .brand-copy p{font-size:14px;line-height:1.45;max-width:155px}
 .mascot{width:112%;max-width:290px;margin-left:-8%;height:auto;max-height:180px;object-fit:contain;display:block;transition:transform .25s ease;transform-origin:50% 85%}
-.mascot:hover{transform:rotate(3deg)}
+
 .btn{border-radius:15px;font-size:16px;min-height:48px;font-weight:600;background:var(--card)}
 .btn.primary{font-weight:750}
 .btn.link{background:none}
@@ -82,3 +82,30 @@ body.tabs #toast{bottom:calc(91px + env(safe-area-inset-bottom))}
 .batch-remove{position:absolute;right:-5px;top:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer}
 .batch-remove .icon{width:19px;height:19px}
 .batch-remove:hover,.batch-remove:focus-visible{background:var(--card);color:var(--danger)}
+
+/* Short, event-driven motion: no looping distractions while cooking. */
+.mascot-button{display:block;min-width:0;width:100%;padding:0;border:0;background:transparent;border-radius:22px;cursor:pointer;transform-origin:50% 85%}
+@media(prefers-reduced-motion:no-preference){
+  .mascot-button{animation:bagel-hello 700ms cubic-bezier(.22,1,.36,1) both}
+  .mascot.wiggling{animation:bagel-wiggle 650ms ease-in-out}
+  #screen-edit:not([hidden]),#screen-compare:not([hidden]),#screen-settings:not([hidden]){animation:page-arrive 220ms ease-out both}
+  #entry-step-one:not([hidden]),#entry-step-two:not([hidden]){animation:page-arrive 220ms ease-out both}
+  .seg[aria-pressed=true]{animation:score-pop 200ms ease-out}
+  .btn,.seg,.entry-steps button,.batch-remove{transition:transform 120ms ease,background-color 120ms ease}
+  .btn:active,.seg:active,.entry-steps button:active,.batch-remove:active{transform:scale(.97)}
+  @media(hover:hover){.mascot-button:hover .mascot:not(.wiggling){transform:rotate(3deg)}}
+}
+@keyframes bagel-hello{
+  0%{opacity:0;transform:translateY(12px) rotate(-5deg) scale(.96)}
+  65%{opacity:1;transform:translateY(-3px) rotate(2deg) scale(1.01)}
+  100%{opacity:1;transform:none}
+}
+@keyframes bagel-wiggle{
+  0%,100%{transform:translateY(0) rotate(0)}
+  20%{transform:translateY(-7px) rotate(-7deg)}
+  45%{transform:translateY(-3px) rotate(7deg)}
+  70%{transform:translateY(-5px) rotate(-4deg)}
+  85%{transform:translateY(0) rotate(2deg)}
+}
+@keyframes page-arrive{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes score-pop{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
