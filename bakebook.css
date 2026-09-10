@@ -86,7 +86,7 @@ body.tabs #toast{bottom:calc(91px + env(safe-area-inset-bottom))}
 /* Short, event-driven motion: no looping distractions while cooking. */
 .mascot-button{display:block;min-width:0;width:100%;padding:0;border:0;background:transparent;border-radius:22px;cursor:pointer;transform-origin:50% 85%}
 @media(prefers-reduced-motion:no-preference){
-  .mascot-button{animation:bagel-hello 700ms cubic-bezier(.22,1,.36,1) both}
+  .mascot-button.ready-to-greet{animation:bagel-hello 650ms ease-in-out 120ms both}
   .mascot.wiggling{animation:bagel-wiggle 650ms ease-in-out}
   #screen-edit:not([hidden]),#screen-compare:not([hidden]),#screen-settings:not([hidden]){animation:page-arrive 220ms ease-out both}
   #entry-step-one:not([hidden]),#entry-step-two:not([hidden]){animation:page-arrive 220ms ease-out both}
@@ -96,9 +96,11 @@ body.tabs #toast{bottom:calc(91px + env(safe-area-inset-bottom))}
   @media(hover:hover){.mascot-button:hover .mascot:not(.wiggling){transform:rotate(3deg)}}
 }
 @keyframes bagel-hello{
-  0%{opacity:0;transform:translateY(12px) rotate(-5deg) scale(.96)}
-  65%{opacity:1;transform:translateY(-3px) rotate(2deg) scale(1.01)}
-  100%{opacity:1;transform:none}
+  0%,100%{transform:rotate(0)}
+  20%{transform:rotate(-4deg)}
+  45%{transform:rotate(4deg)}
+  70%{transform:rotate(-2deg)}
+  85%{transform:rotate(1deg)}
 }
 @keyframes bagel-wiggle{
   0%,100%{transform:translateY(0) rotate(0)}

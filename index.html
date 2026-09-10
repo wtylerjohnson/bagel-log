@@ -331,7 +331,7 @@ body.tabs #toast{bottom:calc(76px + env(safe-area-inset-bottom))}
     </div>
 
     <div class="section">
-      <div class="kv"><span>Bagel Log</span><span id="stat-version">Bakebook · v10</span></div>
+      <div class="kv"><span>Bagel Log</span><span id="stat-version">Bakebook · v11</span></div>
       <div class="kv"><span>Storage</span><span id="stat-storage">IndexedDB, this device</span></div>
     </div>
   </section>
@@ -1442,6 +1442,11 @@ document.addEventListener('click', e => {
 });
 
 $('.mascot').addEventListener('animationend', () => $('.mascot').classList.remove('wiggling'));
+// Start the welcome only once the artwork is visible, including a first visit.
+const mascotImage = $('.mascot');
+const greetBaker = () => mascotImage.closest('.mascot-button').classList.add('ready-to-greet');
+mascotImage.addEventListener('load', greetBaker, { once: true });
+if (mascotImage.complete && mascotImage.naturalWidth > 0) greetBaker();
 
 $('#f-camera').addEventListener('change', function () { addPhotos(this.files); this.value = ''; });
 $('#f-library').addEventListener('change', function () { addPhotos(this.files); this.value = ''; });

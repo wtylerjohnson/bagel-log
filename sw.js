@@ -1,7 +1,7 @@
-/* Bakebook with a playful animated bagel baker.
+/* Bakebook with a gentle opening wiggle.
    Bagel Log service worker — offline app shell.
    Bump CACHE when you edit index.html so phones pick the new build up. */
-const CACHE = 'bagel-log-v10';
+const CACHE = 'bagel-log-v11';
 const ASSETS = [
   './',
   './index.html',
